@@ -70,11 +70,11 @@
 
 - (BOOL) isSystemUrl:(NSURL*)url
 {
-	if ([[url host] isEqualToString:@"itunes.apple.com"]) {
-		return YES;
-	}
+    if ([[url host] isEqualToString:@"itunes.apple.com"]) {
+        return YES;
+    }
 
-	return NO;
+    return NO;
 }
 
 - (void)open:(CDVInvokedUrlCommand*)command
@@ -239,6 +239,18 @@
     // Run later to avoid the "took a long time" log message.
     dispatch_async(dispatch_get_main_queue(), ^{
         if (weakSelf.inAppBrowserViewController != nil) {
+             UIView* inAppView = weakSelf.inAppBrowserViewController.view;
+             [weakSelf.viewController addChildViewController:weakSelf.inAppBrowserViewController];
+             [weakSelf.viewController.view addSubview:weakSelf.inAppBrowserViewController.view];
+             inAppView.transform = CGAffineTransformMakeTranslation(0, inAppView.frame.size.height);
+ 
+             [UIView animateWithDuration:0.4 delay:0 usingSpringWithDamping:0.9 initialSpringVelocity:0.1 options:0 animations:^{
+                 inAppView.transform = CGAffineTransformIdentity;
+             } completion:nil];
+
+            /**
+            // from master
+
             CGRect frame = [[UIScreen mainScreen] bounds];
             UIWindow *tmpWindow = [[UIWindow alloc] initWithFrame:frame];
             UIViewController *tmpController = [[UIViewController alloc] init];
@@ -247,6 +259,9 @@
 
             [tmpWindow makeKeyAndVisible];
             [tmpController presentViewController:nav animated:YES completion:nil];
+
+            **/
+
         }
     });
 }
@@ -268,11 +283,12 @@
 
     // Run later to avoid the "took a long time" log message.
     dispatch_async(dispatch_get_main_queue(), ^{
-        if (self.inAppBrowserViewController != nil) {
-            _previousStatusBarStyle = -1;
-            [self.inAppBrowserViewController.presentingViewController dismissViewControllerAnimated:YES completion:nil];
+           if (self.inAppBrowserViewController != nil) {
+            _previousStatusBarStyle = -1;           
+           [self.inAppBrowserViewController.presentingViewController dismissViewControllerAnimated:YES completion:nil];
         }
     });
+    
 }
 
 - (void)openInCordovaWebView:(NSURL*)url withOptions:(NSString*)options
@@ -813,12 +829,17 @@
 
     __weak UIViewController* weakSelf = self;
 
+
     // Run later to avoid the "took a long time" log message.
     dispatch_async(dispatch_get_main_queue(), ^{
-        if ([weakSelf respondsToSelector:@selector(presentingViewController)]) {
-            [[weakSelf presentingViewController] dismissViewControllerAnimated:YES completion:nil];
-        } else {
-            [[weakSelf parentViewController] dismissViewControllerAnimated:YES completion:nil];
+        if ([weakSelf parentViewController]) {
+            [UIView animateWithDuration:0.3 delay:0 options:UIViewAnimationOptionCurveEaseInOut animations:^{
+                weakSelf.view.transform = CGAffineTransformMakeTranslation(0, weakSelf.view.frame.size.height);
+            } completion:^(BOOL finished) {
+                [weakSelf.view removeFromSuperview];
+                [weakSelf removeFromParentViewController];
+                weakSelf.view = nil;
+            }];
         }
     });
 }
